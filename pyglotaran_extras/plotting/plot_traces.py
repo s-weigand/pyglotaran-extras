@@ -25,9 +25,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from cycler import Cycler
-    from matplotlib.axis import Axis
+    from matplotlib.axes import Axes
     from matplotlib.figure import Figure
-    from matplotlib.pyplot import Axes
 
     from pyglotaran_extras.types import ResultLike
 
@@ -36,7 +35,7 @@ if TYPE_CHECKING:
 def plot_data_and_fits(
     result: ResultLike,
     wavelength: float,
-    axis: Axis,
+    axis: Axes,
     center_λ: float | None = None,
     main_irf_nr: int = 0,
     linlog: bool = False,
@@ -57,8 +56,8 @@ def plot_data_and_fits(
         Data structure which can be converted to a mapping.
     wavelength : float
         Wavelength to plot data and fits for.
-    axis : Axis
-        Axis to plot the data and fits on.
+    axis : Axes
+        Axes to plot the data and fits on.
     center_λ : float | None
         Center wavelength (λ in nm)
     main_irf_nr : int

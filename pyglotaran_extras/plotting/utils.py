@@ -21,13 +21,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Hashable
     from collections.abc import Mapping
+    from collections.abc import Sequence
+    from typing import Any
     from typing import Literal
 
-    from collecations.abs import Sequence
     from cycler import Cycler
-    from matplotlib.axis import Axis
+    from matplotlib.axes import Axes
     from matplotlib.figure import Figure
-    from matplotlib.pyplot import Axes
 
     from pyglotaran_extras.types import BuiltinSubPlotLabelFormatFunctionKey
     from pyglotaran_extras.types import CyclerColor
@@ -409,27 +409,24 @@ def get_shifted_traces(
     return shift_time_axis_by_irf_location(traces, irf_location)
 
 
-def ensure_axes_array(axes: Axis | Axes) -> Axes:
+def ensure_axes_array(axes: Axes | np.ndarray[Any, Axes]) -> np.ndarray[Any, Axes]:
     """Ensure that axes have flatten method even if it is a single axis.
 
     Parameters
     ----------
-    axes : Axis | Axes
-        Axis or Axes to convert for API consistency.
+    axes : Axes | np.ndarray[Any, Axes]
+        Axes or array of Axes to convert for API consistency.
 
     Returns
     -------
-    Axes
+    np.ndarray[Any, Axes]
         Numpy ndarray of axes.
     """
-    # We can't use `Axis` in isinstance so we check for the np.ndarray attribute of `Axes`
-    if hasattr(axes, "flatten") is False:
-        axes = np.array([axes])
-    return axes
+    return np.array([axes]) if isinstance(axes, np.ndarray) is False else axes
 
 
-def add_cycler_if_not_none(axis: Axis | Axes, cycler: Cycler | None) -> None:
-    """Add cycler to and axis if it is not None.
+def add_cycler_if_not_none(axis: Axes | np.ndarray[Any, Axes], cycler: Cycler | None) -> None:
+    """Add cycler to ``Axes`` if it is not None.
 
     This is a convenience function that allow to opt out of using
     a cycler, which is needed to run a plotting function in a loop
@@ -438,8 +435,8 @@ def add_cycler_if_not_none(axis: Axis | Axes, cycler: Cycler | None) -> None:
 
     Parameters
     ----------
-    axis : Axis | Axes
-        Axis to plot on.
+    axis : Axes | np.ndarray[Any, Axes]
+        Axes to add ``cycler`` to.
     cycler : Cycler | None
         Plot style cycler to use.
     """
@@ -736,7 +733,7 @@ def get_subplot_label_format_function(
 
 
 def add_subplot_labels(
-    axes: Axis | Axes,
+    axes: Axes | np.ndarray[Any, Axes],
     *,
     label_position: tuple[float, float] = (-0.05, 1.05),
     label_coords: SubPlotLabelCoord = "axes fraction",
@@ -750,7 +747,7 @@ def add_subplot_labels(
 
     Parameters
     ----------
-    axes : Axis | Axes
+    axes : Axes | np.ndarray[Any, Axes]
         Axes (subplots) on which the labels should be added.
     label_position : tuple[float, float]
         Position of the label in ``label_coords`` coordinates.
