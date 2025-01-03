@@ -52,6 +52,7 @@ optional-dependencies.docs = [
   "myst-nb>=1.1.1",                  # notebook docs
   "myst-parser>=0.12",
   "numpydoc>=0.8",
+  "pyglotaran-extras[widgets]",
   "sphinx>=3.2",
   "sphinx-copybutton>=0.3",
   "sphinx-last-updated-by-git>=0.3",
@@ -66,6 +67,10 @@ optional-dependencies.test = [
   "pluggy>=0.7",
   "pytest>=3.7.1",
   "pytest-cov>=2.5.1",
+]
+optional-dependencies.widgets = [
+  "anywidget>=0.9.13",
+  "networkx>=3.3",
 ]
 urls.Changelog = "https://pyglotaran-extras.readthedocs.io/en/latest/changelog.html"
 urls.Documentation = "https://pyglotaran-extras.readthedocs.io"
@@ -86,6 +91,24 @@ include = [
 features = [
   "dev",
 ]
+
+[tool.hatch.build]
+only-packages = true
+artifacts = [ "pyglotaran_extras/widgets/kineticschemevisualizer/static/*" ]
+
+[tool.hatch.build.hooks.jupyter-builder]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = [
+  "pyglotaran_extras/widgets/kineticschemevisualizer/static/widget.js",
+]
+skip-if-exists = [
+  "pyglotaran_extras/widgets/kineticschemevisualizer/static/widget.js",
+]
+dependencies = [ "hatch-jupyter-builder>=0.5.0" ]
+
+[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
+npm = "npm"
+build_cmd = "build"
 
 [tool.docformatter]
 black = true
