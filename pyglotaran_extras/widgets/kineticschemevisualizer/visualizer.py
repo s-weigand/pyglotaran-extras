@@ -1,45 +1,69 @@
-from typing import Dict, List, Union, Optional
+from __future__ import annotations
+
 import json
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict
-from glotaran.model.model import Model
-from glotaran.parameter.parameters import Parameters
+from pydantic import BaseModel
+from pydantic import ConfigDict
 
-from .utils import get_filled_megacomplex_k_matrices, build_all_transitions, dump_cytpscape_json_data
-from .widget import GraphWidget
+from pyglotaran_extras.widgets.kineticschemevisualizer.utils import build_all_transitions
+from pyglotaran_extras.widgets.kineticschemevisualizer.utils import dump_cytpscape_json_data
+from pyglotaran_extras.widgets.kineticschemevisualizer.utils import (
+    get_filled_megacomplex_k_matrices,
+)
+from pyglotaran_extras.widgets.kineticschemevisualizer.widget import GraphWidget
+
+if TYPE_CHECKING:
+    from glotaran.model.model import Model
+    from glotaran.parameter.parameters import Parameters
+
 
 class Node(BaseModel):
-    alternate_name: Optional[str] = None
-    width: Optional[int] = 80
-    height: Optional[int] = 30
+    """Data used to visualize a node."""
+
+    alternate_name: str | None = None
+    width: int | None = 80
+    height: int | None = 30
+
 
 class VisualizationOptions(BaseModel):
-    nodes: Dict[str, Node] = {}
-    colour_node_mapping: Dict[str, List[str]] = {}
-    omitted_rate_constants: List[str] = []
+    """Visualization option for visualizer functions."""
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
-def visualize_megacomplex(megacomplex: Union[str, List[str]], model: Model, parameter: Parameters, visualization_options: VisualizationOptions = VisualizationOptions()) -> GraphWidget:
-    if isinstance(megacomplex, str):
-        megacomplexes = [megacomplex]
-    else:
-        megacomplexes = megacomplex
+    nodes: dict[str, Node] = {}
+    colour_node_mapping: dict[str, list[str]] = {}
+    omitted_rate_constants: list[str] = []
+
+
+def visualize_megacomplex(
+    megacomplex: str | list[str],
+    model: Model,
+    parameter: Parameters,
+    visualization_options: VisualizationOptions = VisualizationOptions(),
+) -> GraphWidget:
+    megacomplexes = [megacomplex] if isinstance(megacomplex, str) else megacomplex
 
     k_matrices = get_filled_megacomplex_k_matrices(megacomplexes, model, parameter)
 
     transitions = build_all_transitions(k_matrices, visualization_options.omitted_rate_constants)
-    
+
     graph_data = dump_cytpscape_json_data(transitions)
 
-    widget = GraphWidget(graph_data, visualization_options=visualization_options.__dict__)
+    return GraphWidget(graph_data, visualization_options=visualization_options.__dict__)
 
-    return widget
 
-def visualize_dataset_model(dataset_model: str, model: Model, parameter: Parameters, exclude_megacomplexes: Optional[List[str]] = None, visualization_options: VisualizationOptions = VisualizationOptions()) -> GraphWidget:
+def visualize_dataset_model(
+    dataset_model: str,
+    model: Model,
+    parameter: Parameters,
+    exclude_megacomplexes: list[str] | None = None,
+    visualization_options: VisualizationOptions = VisualizationOptions(),
+) -> GraphWidget:
     if dataset_model not in model.dataset:
-        raise ValueError(f"Dataset model {dataset_model} not found in the model.")
-    
+        msg = f"Dataset model {dataset_model} not found in the model."
+        raise ValueError(msg)
+
     associated_megacomplexes = model.dataset[dataset_model].megacomplex
     if exclude_megacomplexes:
         megacomplexes = [mc for mc in associated_megacomplexes if mc not in exclude_megacomplexes]
@@ -49,9 +73,10 @@ def visualize_dataset_model(dataset_model: str, model: Model, parameter: Paramet
     k_matrices = get_filled_megacomplex_k_matrices(megacomplexes, model, parameter)
 
     transitions = build_all_transitions(k_matrices, visualization_options.omitted_rate_constants)
-    
+
     graph_data = dump_cytpscape_json_data(transitions)
 
-    widget = GraphWidget(graph_data=json.dumps(graph_data), visualization_options=visualization_options.model_dump_json())
-
-    return widget
+    return GraphWidget(
+        graph_data=graph_data,
+        visualization_options=visualization_options.model_dump(),
+    )

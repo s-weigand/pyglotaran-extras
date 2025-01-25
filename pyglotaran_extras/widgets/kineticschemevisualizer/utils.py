@@ -1,17 +1,32 @@
-from typing import List
+"""Module containing utility functions to prepare data for the widget."""
+
+from __future__ import annotations
+
 from collections import deque
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import cast
 
 import networkx as nx
+from glotaran.builtin.megacomplexes.decay import DecayMegacomplex
+from glotaran.model.item import fill_item
 from networkx.readwrite.json_graph import cytoscape_data
 
-from glotaran.model.model import Model
-from glotaran.parameter.parameters import Parameters
-from glotaran.model.item import fill_item
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from glotaran.model.model import Model
+    from glotaran.parameter.parameters import Parameters
+
+    from pyglotaran_extras.widgets.kineticschemevisualizer.visualizer import VisualizationOptions
 
 
-def round_and_convert(value_in_ps_inverse):
+def round_and_convert(value_in_ps_inverse: float) -> float:
     value_in_ns_inverse = value_in_ps_inverse * 1e3
-    return round(value_in_ns_inverse) if value_in_ns_inverse >= 1 else round(value_in_ns_inverse, 2)
+    return (
+        round(value_in_ns_inverse) if value_in_ns_inverse >= 1 else round(value_in_ns_inverse, 2)
+    )
+
 
 def build_all_transitions(megacomplex_k_matrices, omitted_rate_constants):
     transitions = []
@@ -22,53 +37,61 @@ def build_all_transitions(megacomplex_k_matrices, omitted_rate_constants):
         for (state_from, state_to), param in system.matrix.items():
             if param.label not in omitted_rate_constants:
                 rate_constant_value = round_and_convert(param.value)
-                extra_edge_attribute = {'weight': rate_constant_value}
+                extra_edge_attribute = {"weight": rate_constant_value}
                 if state_from != state_to:
                     transitions.append((state_to, state_from, extra_edge_attribute))
                 elif (state_to, rate_constant_value) not in total_decay_rates:
-                    transitions.append((state_to, f'GS{idx}', extra_edge_attribute))
+                    transitions.append((state_to, f"GS{idx}", extra_edge_attribute))
                     total_decay_rates.add((state_to, rate_constant_value))
                     idx += 1
     return transitions
 
-def get_filled_megacomplex_k_matrices(megacomplexes: List[str], model: Model, parameters: Parameters):
+
+def get_filled_megacomplex_k_matrices(
+    megacomplexes: list[str], model: Model, parameters: Parameters
+):
     k_matrices = {}
     for mc in megacomplexes:
         if mc not in model.megacomplex:
-            raise ValueError(f"Megacomplex {mc} not found.")
-        if model.megacomplex[mc].type != 'decay':
+            msg = f"Megacomplex {mc} not found."
+            raise ValueError(msg)
+        if model.megacomplex[mc].type != "decay":
             continue
-        filled_megacomplex = fill_item(model.megacomplex[mc], model, parameters)
+        filled_megacomplex = cast(
+            DecayMegacomplex, fill_item(model.megacomplex[mc], model, parameters)
+        )
         k_matrices[mc] = filled_megacomplex.get_k_matrix()
     return k_matrices
 
-def apply_some_adjustments(graph):
+
+def apply_some_adjustments(graph: nx.DiGraph) -> nx.DiGraph:
     for node in graph:
-        ground_state_neighbors = [neighbor for neighbor in graph[node] if 'GS' in neighbor]
+        ground_state_neighbors = [neighbor for neighbor in graph[node] if "GS" in neighbor]
 
         if len(ground_state_neighbors) > 1:
             total_rate_constant = 0
             first_neighbor = ground_state_neighbors[0]
 
             for neighbor in ground_state_neighbors[1:]:
-                total_rate_constant += graph[node][neighbor]['weight']
+                total_rate_constant += graph[node][neighbor]["weight"]
                 graph.remove_edge(node, neighbor)
 
-            graph[node][first_neighbor]['weight'] += total_rate_constant
+            graph[node][first_neighbor]["weight"] += total_rate_constant
 
     return graph
 
-def dump_cytpscape_json_data(transitions):
+
+def dump_cytpscape_json_data(transitions) -> Mapping[str, Any]:
     graph = nx.DiGraph()
     graph.add_edges_from(transitions)
     graph = apply_some_adjustments(graph)
     return cytoscape_data(graph)
 
-def is_directed_acyclic(graph):
-    return nx.is_directed_acyclic_graph(graph)
 
-def layout_directed_acyclic_graph(graph, visualization_options):
-    topological_order = list(nx.topological_sort(graph))
+def layout_directed_acyclic_graph(
+    graph: nx.DiGraph, visualization_options: VisualizationOptions
+) -> tuple[nx.DiGraph, dict[int, tuple[int, int]], VisualizationOptions]:
+    topological_order: list[int] = list(nx.topological_sort(graph))
 
     x_pos = 0
     y_pos = 0
@@ -77,7 +100,9 @@ def layout_directed_acyclic_graph(graph, visualization_options):
 
     # Start positioning from the first node in topological order
     root_node = topological_order[0]
-    update_position_in_directed_acyclic_graph(graph, root_node, x_pos, y_pos, node_positions, layer_width)
+    update_position_in_directed_acyclic_graph(
+        graph, root_node, x_pos, y_pos, node_positions, layer_width
+    )
 
     # Adjust the width of nodes with multiple predecessors
     for node in topological_order:
@@ -103,11 +128,12 @@ def layout_directed_acyclic_graph(graph, visualization_options):
                 current_x, current_y = node_positions[current_node]
                 node_positions[current_node] = (current_x + shift_x, current_y + shift_y)
                 nodes_to_shift.extend(graph.successors(current_node))
-    visualization_options.plot_graph_edge_connection_style = 'arc3'
+    visualization_options.plot_graph_edge_connection_style = "arc3"
     return graph, node_positions, visualization_options
 
+
 # Function to update position recursively
-def update_position_in_directed_acyclic_graph(graph, node, x, y, pos, layer_width):
+def update_position_in_directed_acyclic_graph(graph: nx.DiGraph, node, x, y, pos, layer_width):
     pos[node] = (x, y)
     successors = list(graph.successors(node))
     num_successors = len(successors)
@@ -116,25 +142,26 @@ def update_position_in_directed_acyclic_graph(graph, node, x, y, pos, layer_widt
     elif num_successors > 1:
         for i, successor in enumerate(successors):
             if i == 0:
-                update_position_in_directed_acyclic_graph(graph, successor, x + 1, y, pos, layer_width)
+                update_position_in_directed_acyclic_graph(
+                    graph, successor, x + 1, y, pos, layer_width
+                )
             else:
-                update_position_in_directed_acyclic_graph(graph, successor, x, y - 1, pos, layer_width)
+                update_position_in_directed_acyclic_graph(
+                    graph, successor, x, y - 1, pos, layer_width
+                )
     layer_width[x] = max(layer_width.get(x, 0), y)
 
-def layout_directed_cyclic_graph(graph, visualization_options):
-    node_positions = {}
+
+def layout_directed_cyclic_graph(graph: nx.DiGraph, visualization_options: VisualizationOptions):
     degree_dict = dict(graph.degree())
     sorted_nodes = sorted(degree_dict, key=degree_dict.get, reverse=True)
 
     # Center position for the starting node
     center = (0, 0)
-    node_positions[sorted_nodes[0]] = center
-
+    node_positions = {sorted_nodes[0]: center}
     directions = [(1, 0), (0, 1), (0, -1), (-1, 0)]
 
-    used_positions = set()
-    used_positions.add(center)
-
+    used_positions = {center}
     queue = deque([sorted_nodes[0]])
 
     corner_position = (10, 10)
@@ -163,6 +190,6 @@ def layout_directed_cyclic_graph(graph, visualization_options):
                         used_positions.add(corner_position)
                         corner_position = (corner_position[0] + 1, corner_position[1] + 1)
                         break
-    visualization_options.plot_graph_edge_connection_style = 'arc3,rad=0.1'
+    visualization_options.plot_graph_edge_connection_style = "arc3,rad=0.1"
     visualization_options.plot_graph_node_size = 5000
     return graph, node_positions, visualization_options
