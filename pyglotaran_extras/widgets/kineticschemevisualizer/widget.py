@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import pathlib
+from typing import TYPE_CHECKING
 from typing import Any
 
 import anywidget
 import traitlets
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 class GraphWidget(anywidget.AnyWidget):
@@ -21,11 +25,14 @@ class GraphWidget(anywidget.AnyWidget):
 
     def __init__(
         self,
-        graph_data: dict[str, Any] = {},
-        visualization_options: dict[str, Any] = {},
+        graph_data: Mapping[str, Any] | None = None,
+        visualization_options: dict[str, Any] | None = None,
         *args: Any,
         **kwargs: Any,
     ) -> None:
+
+        self.graph_data = graph_data if graph_data is not None else {}
+        self.visualization_options = (
+            visualization_options if visualization_options is not None else {}
+        )
         super().__init__(*args, **kwargs)
-        self.graph_data = graph_data
-        self.visualization_options = visualization_options

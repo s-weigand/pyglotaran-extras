@@ -73,8 +73,7 @@ function createNodeStyle(visualization_options) {
 function render({ model, el }) {
   let graph_data = model.get("graph_data");
   let visualization_options = model.get("visualization_options");
-  console.log(graph_data);
-  console.log(visualization_options);
+  console.log({ graph_data, visualization_options });
   let widgetHeight = model.get("height").toString();
 
   let container = document.createElement("div");

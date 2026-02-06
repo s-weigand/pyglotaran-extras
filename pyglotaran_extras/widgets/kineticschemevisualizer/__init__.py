@@ -7,4 +7,9 @@ from pyglotaran_extras.widgets.kineticschemevisualizer.visualizer import visuali
 from pyglotaran_extras.widgets.kineticschemevisualizer.visualizer import visualize_megacomplex
 from pyglotaran_extras.widgets.kineticschemevisualizer.widget import GraphWidget
 
-__all__ = ["VisualizationOptions", "visualize_dataset_model", "visualize_megacomplex", "GraphWidget"]
+__all__ = [
+    "GraphWidget",
+    "VisualizationOptions",
+    "visualize_dataset_model",
+    "visualize_megacomplex",
+]

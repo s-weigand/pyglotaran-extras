@@ -85,6 +85,20 @@ docs = [
 ]
 
 [tool.hatch]
+build.only-packages = true
+build.artifacts = [
+  "pyglotaran_extras/widgets/kineticschemevisualizer/static/*",
+]
+build.hooks.jupyter-builder.build-function = "hatch_jupyter_builder.npm_builder"
+build.hooks.jupyter-builder.ensured-targets = [
+  "pyglotaran_extras/widgets/kineticschemevisualizer/static/widget.js",
+]
+build.hooks.jupyter-builder.skip-if-exists = [
+  "pyglotaran_extras/widgets/kineticschemevisualizer/static/widget.js",
+]
+build.hooks.jupyter-builder.dependencies = [ "hatch-jupyter-builder>=0.5.0" ]
+build.hooks.jupyter-builder.build-kwargs.npm = "npm"
+build.hooks.jupyter-builder.build-kwargs.build_cmd = "build"
 build.targets.sdist.include = [
   "/pyglotaran_extras",
   "/docs",
@@ -92,24 +106,6 @@ build.targets.sdist.include = [
   "changelog.md",
 ]
 version.path = "pyglotaran_extras/__init__.py"
-
-[tool.hatch.build]
-only-packages = true
-artifacts = [ "pyglotaran_extras/widgets/kineticschemevisualizer/static/*" ]
-
-[tool.hatch.build.hooks.jupyter-builder]
-build-function = "hatch_jupyter_builder.npm_builder"
-ensured-targets = [
-  "pyglotaran_extras/widgets/kineticschemevisualizer/static/widget.js",
-]
-skip-if-exists = [
-  "pyglotaran_extras/widgets/kineticschemevisualizer/static/widget.js",
-]
-dependencies = [ "hatch-jupyter-builder>=0.5.0" ]
-
-[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
-npm = "npm"
-build_cmd = "build"
 
 [tool.docformatter]
 black = true

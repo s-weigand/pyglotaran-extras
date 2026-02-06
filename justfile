@@ -1,4 +1,5 @@
 # Set shell for Windows compatibility
+
 set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 
 # Default recipe (show available recipes)
@@ -12,27 +13,27 @@ default:
 # Remove directory or file recursively (cross-platform)
 [private]
 _rm-rf +paths:
-    @uv run python -c "import shutil, pathlib; [shutil.rmtree(pathlib.Path(p), ignore_errors=True) if pathlib.Path(p).exists() else None for p in '{{paths}}'.split()]"
+    @uv run python -c "import shutil, pathlib; [shutil.rmtree(pathlib.Path(p), ignore_errors=True) if pathlib.Path(p).exists() else None for p in '{{ paths }}'.split()]"
 
 # Remove file (cross-platform)
 [private]
 _rm-f path:
-    @uv run python -c "import pathlib; p = pathlib.Path('{{path}}'); p.unlink(missing_ok=True)"
+    @uv run python -c "import pathlib; p = pathlib.Path('{{ path }}'); p.unlink(missing_ok=True)"
 
 # Find and remove files by pattern (cross-platform)
 [private]
 _find-rm +patterns:
-    @uv run python -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink() for pattern in '{{patterns}}'.split() for p in pathlib.Path('.').rglob(pattern)]"
+    @uv run python -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink() for pattern in '{{ patterns }}'.split() for p in pathlib.Path('.').rglob(pattern)]"
 
 # List directory contents (cross-platform)
 [private]
 _ls-l path:
-    @uv run python -c "import pathlib; [print(f'{p.stat().st_size:>10} {p.name}') for p in sorted(pathlib.Path('{{path}}').iterdir())]"
+    @uv run python -c "import pathlib; [print(f'{p.stat().st_size:>10} {p.name}') for p in sorted(pathlib.Path('{{ path }}').iterdir())]"
 
 # Open file or URL in default browser/application (cross-platform)
 [private]
 _open-browser path:
-    @uv run python -c "import webbrowser, pathlib; webbrowser.open('file://' + str(pathlib.Path('{{path}}').resolve()))"
+    @uv run python -c "import webbrowser, pathlib; webbrowser.open('file://' + str(pathlib.Path('{{ path }}').resolve()))"
 
 # ============================================================================
 # Cleaning
@@ -102,4 +103,4 @@ dist: clean-build
 
 # Install the package and its dependencies
 install:
-    uv sync
+    uv sync --frozen --all-extras
