@@ -8,10 +8,21 @@ from glotaran.model.model import Model
 from glotaran.parameter.parameters import Parameters
 from glotaran.model.item import fill_item
 
+def custom_round(value):
+    if value >= 10:
+        return round(value)
+    elif value >= 1:
+        return round(value, 2)
+    elif value >= 0.1:
+        return round(value, 2)
+    elif value >= 0.01:
+        return round(value, 3)
+    else:
+        return round(value, 4)
 
 def round_and_convert(value_in_ps_inverse):
     value_in_ns_inverse = value_in_ps_inverse * 1e3
-    return round(value_in_ns_inverse) if value_in_ns_inverse >= 1 else round(value_in_ns_inverse, 2)
+    return custom_round(value_in_ns_inverse)
 
 def build_all_transitions(megacomplex_k_matrices, omitted_rate_constants):
     transitions = []
