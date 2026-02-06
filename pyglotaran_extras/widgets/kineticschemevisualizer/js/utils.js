@@ -1,9 +1,9 @@
 function exportGraphAsPng(cy, options = {}) {
   const defaultOptions = {
-    output: 'base64uri',
-    bg: 'white'
+    output: "base64uri",
+    bg: "white",
   };
-  
+
   const exportOptions = Object.assign({}, defaultOptions, options);
   return cy.png(exportOptions);
 }
@@ -12,13 +12,13 @@ function createExportButton(cy) {
   let button = document.createElement("button");
   button.textContent = "Export PNG";
   button.addEventListener("click", () => {
-      let pngData = exportGraphAsPng(cy);
-      let downloadLink = document.createElement("a");
-      downloadLink.href = pngData;
-      downloadLink.download = "graph.png";
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
+    let pngData = exportGraphAsPng(cy);
+    let downloadLink = document.createElement("a");
+    downloadLink.href = pngData;
+    downloadLink.download = "graph.png";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
   });
   return button;
 }
@@ -32,9 +32,9 @@ function createRadio(id, name, value, className, applyLayout, cy) {
   radio.classList.add(className);
 
   radio.addEventListener("change", () => {
-      if (radio.checked) {
-          applyLayout(cy);
-      }
+    if (radio.checked) {
+      applyLayout(cy);
+    }
   });
 
   return radio;
@@ -54,4 +54,4 @@ module.exports = {
   createExportButton,
   createRadio,
   createLabel,
-}
+};
